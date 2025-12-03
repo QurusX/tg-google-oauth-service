@@ -3,7 +3,7 @@ import logging
 import aiohttp
 from aiohttp import web
 
-from database.db import ensure_schema, upsert_user_google_data
+from database.db import ensure_schema, get_user_refresh_token, upsert_user_google_data
 from google_api.auth import (
     create_folder_and_sheets,
     exchange_code_for_tokens,
@@ -86,9 +86,23 @@ async def handle_auth_callback(request: web.Request) -> web.Response:
                 content_type="text/plain",
             )
 
-        refresh_token, creds = exchange_code_for_tokens(code, state)
-        if not refresh_token:
-            logger.error("No refresh_token returned for user_id=%s", user_id)
+        # Берём ранее сохранённый refresh_token (если пользователь уже проходил OAuth)
+        existing_refresh_token = await get_user_refresh_token(user_id)
+
+        new_refresh_token, creds = exchange_code_for_tokens(code, state)
+
+        # Если Google не выдал новый refresh_token (частый кейс при повторном согласии),
+        # используем старый из БД. В БД при этом ничего не перезаписываем.
+        if new_refresh_token:
+            effective_refresh_token = new_refresh_token
+        else:
+            effective_refresh_token = existing_refresh_token
+
+        if not effective_refresh_token:
+            logger.error(
+                "No refresh_token available for user_id=%s (neither new nor existing).",
+                user_id,
+            )
             await send_telegram_message(
                 chat_id=user_id,
                 text="Ошибка авторизации, попробуйте еще раз, или обратитесь в поддержку.",
@@ -102,7 +116,7 @@ async def handle_auth_callback(request: web.Request) -> web.Response:
 
         await upsert_user_google_data(
             user_id=user_id,
-            refresh_token=refresh_token,
+            refresh_token=effective_refresh_token,
             opiu_url=opiu_url,
             sku_url=sku_url,
             settings_url=settings_url,

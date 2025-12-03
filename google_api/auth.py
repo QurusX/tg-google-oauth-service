@@ -1,5 +1,5 @@
 import logging
-from typing import Tuple
+from typing import Optional, Tuple
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -45,7 +45,7 @@ def generate_authorization_url(state: str) -> str:
     return auth_url
 
 
-def exchange_code_for_tokens(code: str, state: str) -> Tuple[str, Credentials]:
+def exchange_code_for_tokens(code: str, state: str) -> Tuple[Optional[str], Credentials]:
     """
     Обменивает authorization_code на refresh_token и access_token.
     Возвращает refresh_token и объект Credentials (в котором есть access_token).
@@ -54,11 +54,17 @@ def exchange_code_for_tokens(code: str, state: str) -> Tuple[str, Credentials]:
     flow.fetch_token(code=code)
     creds: Credentials = flow.credentials
 
-    refresh_token = creds.refresh_token
+    refresh_token: Optional[str] = creds.refresh_token
     if not refresh_token:
         # В редких случаях Google может не вернуть refresh_token,
-        # если пользователь уже выдавал доступ. Логируем это.
-        logger.warning("Google did not return refresh_token for state=%s", state)
+        # если пользователь уже выдавал доступ и ротация не требуется.
+        # В этом случае используем ранее сохранённый refresh_token из БД
+        # (он будет подставлен на уровне web_server).
+        logger.info(
+            "Google did not return new refresh_token for state=%s, "
+            "will try to reuse existing one.",
+            state,
+        )
 
     return refresh_token, creds
 
