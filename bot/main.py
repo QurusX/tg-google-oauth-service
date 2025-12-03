@@ -1,17 +1,12 @@
 import asyncio
 import logging
 
-from aiogram import Bot, Dispatcher, F
+from aiogram import Bot, Dispatcher
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.types import (
-    CallbackQuery,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-    Message,
-)
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 
 from utils.config import settings
 from utils.logging_setup import setup_logging
@@ -36,10 +31,18 @@ async def on_shutdown(bot: Bot) -> None:
     logger.info("Bot stopped")
 
 
-def get_connect_keyboard() -> InlineKeyboardMarkup:
+def get_connect_keyboard(user_id: int) -> InlineKeyboardMarkup:
+    # Генерируем безопасный state (подписанный HMAC) и сразу формируем URL на /auth.
+    state_token = generate_state(user_id)
+    auth_page_url = f"{settings.backend_base_url}/auth?state={state_token}"
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="Подключить Google", callback_data=CONNECT_GOOGLE_CALLBACK)]
+            [
+                InlineKeyboardButton(
+                    text="Подключить Google",
+                    url=auth_page_url,
+                )
+            ]
         ]
     )
 
@@ -47,27 +50,18 @@ def get_connect_keyboard() -> InlineKeyboardMarkup:
 async def cmd_start(message: Message, state: FSMContext) -> None:
     # Сбрасываем состояние авторизации при новом /start
     await state.clear()
+    user_id = message.from_user.id
     await message.answer(
         # Telegram не принимает полностью пустой текст,
         # используем невидимый символ, чтобы визуально не было лишнего текста.
         text="\u2060",
-        reply_markup=get_connect_keyboard(),
+        reply_markup=get_connect_keyboard(user_id),
     )
 
 
-async def on_connect_google(callback: CallbackQuery, state: FSMContext) -> None:
-    user_id = callback.from_user.id
-    # Генерируем безопасный state (подписанный HMAC).
-    state_token = generate_state(user_id)
-    auth_page_url = f"{settings.backend_base_url}/auth?state={state_token}"
-
-    # Переводим пользователя в состояние ожидания авторизации Google.
-    await state.set_state(AuthStates.waiting_google)
-
-    await callback.message.answer(
-        "Перейдите по ссылке для подключения Google:\n" f"{auth_page_url}"
-    )
-    await callback.answer()
+async def cmd_support(message: Message) -> None:
+    # Муляжная команда "Поддержка" по ТЗ.
+    await message.answer("Поддержка: данный раздел будет доступен позже.")
 
 
 async def main() -> None:
@@ -80,7 +74,7 @@ async def main() -> None:
     dp.shutdown.register(on_shutdown)
 
     dp.message.register(cmd_start, Command("start"))
-    dp.callback_query.register(on_connect_google, F.data == CONNECT_GOOGLE_CALLBACK)
+    dp.message.register(cmd_support, Command("support"))
 
     await dp.start_polling(bot)
 
