@@ -6,3 +6,23 @@ __pycache__/
 bot.log
 .idea/
 .vscode/
+# Секретные переписки и задачи (внутренние файлы)
+task.txt
+переписка.txt
+task.md
+
+# Локальные секреты Google (если скачивал json вручную)
+client_secret*.json
+credentials.json
+
+# Системные файлы
+.DS_Store
+Thumbs.db
+
+# Расширение для логов (если будут другие файлы .log)
+*.log
+
+# Дистрибутивы и сборка
+build/
+dist/
+*.egg-info/
