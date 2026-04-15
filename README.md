@@ -1,161 +1,85 @@
-## Telegram-бот: Google OAuth 2.0 и создание таблиц
+Для GitHub важно, чтобы README выглядел технически грамотно и сразу объяснял ценность проекта (безопасность, архитектура, автоматизация).
 
-Бот по кнопке «Подключить Google» запускает Authorization Code Flow, создаёт в аккаунте пользователя папку «Маржа24» с тремя таблицами (`ОПиУ`, `SKU`, `Настройки`), сохраняет `refresh_token` и URL таблиц в PostgreSQL и уведомляет в Telegram об успехе/ошибке.
+Вот профессиональный вариант **README.md** для твоего нового репозитория:
 
-### Структура
-- `bot/` — aiogram 3 бот и aiohttp web_server, FSM.
-- `handlers/` — хендлеры команд/кнопок.
-- `database/` — `asyncpg`, таблица `users`.
-- `google_api/` — OAuth, Drive/Sheets.
-- `utils/` — конфиг, логирование, HMAC state.
+---
 
-### Требования
-- Python 3.10+
-- PostgreSQL 14+
-- Установка:
-  ```bash
-  pip install -r requirements.txt
-  ```
+# Secure Telegram & Google OAuth 2.0 Integration 🔐📊
 
-### .env (пример)
-```bash
-BOT_TOKEN=your_telegram_bot_token
+**Высокопроизводительный асинхронный сервис для интеграции Telegram-ботов с Google Workspace (Drive/Sheets) через протокол OAuth 2.0.**
 
-POSTGRES_DSN=postgresql://tguser:your_db_password@localhost:5433/tggoogle
+Этот проект реализует надежный механизм авторизации пользователей Telegram в сервисах Google с использованием **Server-Side Authorization Code Flow**. Основной фокус сделан на безопасности данных и автоматизации создания рабочего пространства пользователя.
 
-BACKEND_HOST=0.0.0.0
-BACKEND_PORT=8001
-BACKEND_BASE_URL=https://your-domain.com
+## ✨ Ключевые возможности
 
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-GOOGLE_REDIRECT_URI=https://your-domain.com/auth/callback
+*   **Промышленный OAuth 2.0:** Реализация полного цикла авторизации с получением и надежным хранением `refresh_token`.
+*   **Автоматический Workspace Provisioning:** Сразу после авторизации система создает в Google Drive пользователя папку `Маржа24` и генерирует три необходимых шаблона таблиц (`ОПиУ`, `SKU`, `Настройки`).
+*   **Безопасность (Anti-CSRF):** Использование HMAC-подписанных токенов в параметре `state` для верификации запросов и защиты от подделки.
+*   **Полная асинхронность:** Построено на базе `Aiogram 3.x` и `Aiohttp` для обеспечения высокой пропускной способности.
+*   **Хранение данных:** Интеграция с PostgreSQL через `asyncpg` для эффективной работы с токенами и метаданными пользователей.
 
-STATE_SECRET=long_random_string_for_hmac_state
-LOG_FILE=/opt/Bot-TG-Google-Sheets/bot.log
+## 🛠 Технологический стек
+
+*   **Framework:** Aiogram 3.x (Telegram API)
+*   **Web Server:** Aiohttp (OAuth Backend)
+*   **Database:** PostgreSQL + Asyncpg
+*   **Google API:** google-auth, google-api-python-client
+*   **Security:** HMAC-SHA256 (State signing)
+*   **Config:** Pydantic Settings
+
+## 📂 Архитектура
+
+```text
+├── bot/            # Логика Telegram-бота и Backend-сервер
+├── database/       # Асинхронные операции с БД (PostgreSQL)
+├── google_api/     # Интеграция с Google OAuth, Drive и Sheets
+├── handlers/       # Обработчики команд и событий бота
+├── utils/          # Конфигурация, логирование и безопасность (State)
+└── .env.example    # Шаблон конфигурации окружения
 ```
 
-### Google OAuth 2.0 (кратко)
-1) Google Cloud Console → проект → **APIs & Services → Library**: включить **Drive API**, **Sheets API**.  
-2) **OAuth consent screen**: External, App name, support/developer email, scopes:  
-   `https://www.googleapis.com/auth/drive.file`, `https://www.googleapis.com/auth/spreadsheets`; добавить тестовых пользователей.  
-3) **Credentials → Create Credentials → OAuth client ID**: Web application, redirect URI: `https://your-domain.com/auth/callback`. Скопировать `client_id/secret` в `.env`.
+## 🚀 Быстрый старт
 
-### Локальный запуск (dev)
-В двух терминалах:
+1.  **Клонирование и установка:**
+    ```bash
+    git clone https://github.com/nickalymov/tg-google-oauth-service.git
+    cd tg-google-oauth-service
+    python -m venv venv
+    source venv/bin/activate # Windows: venv\Scripts\activate
+    pip install -r requirements.txt
+    ```
+
+2.  **Настройка окружения:**
+    Создайте файл `.env` на основе `.env.example`. Вам потребуются учетные данные из Google Cloud Console (Client ID и Client Secret).
+
+3.  **Запуск:**
+    Сервис состоит из двух частей, работающих в одной связке:
+    ```bash
+    python -m bot.web_server   # Запуск backend для OAuth
+    python -m bot.main         # Запуск Telegram-бота
+    ```
+
+## 🔒 Безопасность
+
+Проект реализует защиту процесса авторизации:
+1.  При генерации ссылки на авторизацию создается уникальный `state`.
+2.  `state` подписывается секретным ключом сервера (HMAC).
+3.  При получении callback от Google, подпись проверяется. Это гарантирует, что запрос инициировал именно ваш сервер и именно этот пользователь.
+
+---
+
+### Разработано
+[Николай Алымов] — [nickalymov](https://github.com/nickalymov)
+
+---
+
+### Как запушить:
+1. Сохрани этот текст в `README.md` в PyCharm.
+2. В терминале:
 ```bash
-python -m bot.web_server   # aiohttp backend
-python -m bot.main         # Telegram бот
+git add README.md
+git commit -m "docs: rewrite README for professional GitHub presentation"
+git push
 ```
 
-### Production (как настроено на сервере)
-1. **PostgreSQL** (порт 5433 в нашем кейсе):
-   ```bash
-   su - postgres
-   psql
-   CREATE DATABASE tggoogle;
-   CREATE USER tguser WITH PASSWORD 'your_db_password';
-   GRANT ALL PRIVILEGES ON DATABASE tggoogle TO tguser;
-   \q
-   ```
-   Таблица (создаётся авт.) или вручную:
-   ```sql
-   CREATE TABLE IF NOT EXISTS users (
-       user_id BIGINT PRIMARY KEY,
-       google_token TEXT,
-       opiu_url TEXT,
-       sku_url TEXT,
-       setings_url TEXT,
-       created_at TIMESTAMP DEFAULT NOW()
-   );
-   ```
-
-2. **Виртуальное окружение**:
-   ```bash
-   cd /opt/Bot-TG-Google-Sheets
-   python3 -m venv venv
-   source venv/bin/activate
-   pip install -r requirements.txt
-   ```
-
-3. **systemd** (пути как на сервере):
-   - `/etc/systemd/system/tg-google-web.service`
-     ```
-     [Unit]
-     Description=Telegram Google Bot Web Server
-     After=network.target postgresql@16-main.service
-
-     [Service]
-     Type=simple
-     User=root
-     WorkingDirectory=/opt/Bot-TG-Google-Sheets
-     Environment="PATH=/opt/Bot-TG-Google-Sheets/venv/bin"
-     ExecStart=/opt/Bot-TG-Google-Sheets/venv/bin/python -m bot.web_server
-     Restart=always
-     RestartSec=10
-
-     [Install]
-     WantedBy=multi-user.target
-     ```
-   - `/etc/systemd/system/tg-google-bot.service`
-     ```
-     [Unit]
-     Description=Telegram Google Bot
-     After=network.target postgresql@16-main.service tg-google-web.service
-
-     [Service]
-     Type=simple
-     User=root
-     WorkingDirectory=/opt/Bot-TG-Google-Sheets
-     Environment="PATH=/opt/Bot-TG-Google-Sheets/venv/bin"
-     ExecStart=/opt/Bot-TG-Google-Sheets/venv/bin/python -m bot.main
-     Restart=always
-     RestartSec=10
-
-     [Install]
-     WantedBy=multi-user.target
-     ```
-   Активировать:
-   ```bash
-   systemctl daemon-reload
-   systemctl enable tg-google-web.service tg-google-bot.service
-   systemctl start tg-google-web.service tg-google-bot.service
-   ```
-
-4. **nginx + HTTPS (Let’s Encrypt)**, прокси на 127.0.0.1:8001:
-   `/etc/nginx/sites-available/your-domain.com`
-   ```
-   server {
-     listen 80;
-     server_name your-domain.com;
-     return 301 https://$server_name$request_uri;
-   }
-   server {
-     listen 443 ssl http2;
-     server_name your-domain.com;
-     ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
-     ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
-     location / {
-       proxy_pass http://127.0.0.1:8001;
-       proxy_set_header Host $host;
-       proxy_set_header X-Real-IP $remote_addr;
-       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-       proxy_set_header X-Forwarded-Proto $scheme;
-     }
-   }
-   ```
-   Активировать и сертификат:
-   ```bash
-   ln -sf /etc/nginx/sites-available/your-domain.com /etc/nginx/sites-enabled/your-domain.com
-   nginx -t && systemctl restart nginx
-   certbot --nginx -d your-domain.com
-   ```
-
-### Чек-лист ТЗ
-- `/start` — только кнопка «Подключить Google» (без текста), `/support` — заглушка.
-- Кнопка → `/auth` (HTML с «Login with Google»), Authorization Code Flow.
-- Успех: папка `Маржа24` + 3 таблицы, запись в `users` (refresh_token + URL’ы), уведомление «Google успешно подключен».
-- Ошибка: уведомление «Ошибка авторизации…», лог в `bot.log`, сервисы не падают.
-- Мультипользовательски: у каждого Telegram `user_id` своя папка/таблицы и своя запись в `users`.
-
-
+**Теперь твой репозиторий выглядит как работа серьезного бэкенд-разработчика.** Готово! На сегодня это всё или хочешь еще что-то поправить?
