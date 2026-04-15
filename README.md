@@ -62,5 +62,6 @@
 
 ---
 
-### Разработано
-[Николай Алымов] — [nickalymov](t.me/nickalymov)
+### Контакты
+Разработано: **Николай Алымов**  
+Telegram: [@nickalymov](https://t.me/nickalymov)
