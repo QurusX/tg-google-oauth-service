@@ -1,9 +1,3 @@
-Для GitHub важно, чтобы README выглядел технически грамотно и сразу объяснял ценность проекта (безопасность, архитектура, автоматизация).
-
-Вот профессиональный вариант **README.md** для твоего нового репозитория:
-
----
-
 # Secure Telegram & Google OAuth 2.0 Integration 🔐📊
 
 **Высокопроизводительный асинхронный сервис для интеграции Telegram-ботов с Google Workspace (Drive/Sheets) через протокол OAuth 2.0.**
@@ -69,17 +63,4 @@
 ---
 
 ### Разработано
-[Николай Алымов] — [nickalymov](https://github.com/nickalymov)
-
----
-
-### Как запушить:
-1. Сохрани этот текст в `README.md` в PyCharm.
-2. В терминале:
-```bash
-git add README.md
-git commit -m "docs: rewrite README for professional GitHub presentation"
-git push
-```
-
-**Теперь твой репозиторий выглядит как работа серьезного бэкенд-разработчика.** Готово! На сегодня это всё или хочешь еще что-то поправить?
+[Николай Алымов] — [nickalymov](t.me/nickalymov)
